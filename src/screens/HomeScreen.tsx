@@ -13,17 +13,32 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import { currencies } from '../utils/mockData';
 import { Button } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Props {}
 
 export const HomeScreen: FC<Props> = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(0);
   const [date, setDate] = useState(new Date());
   const [currency, setCurrency] = useState('PLN');
   const [rates, setRates] = useState(
     Object.fromEntries(currencies.filter(c => c !== currency).map(c => [c, 0])),
   );
+
+  useEffect(() => {
+    const fetchFromStorage = async () => {
+      try {
+        const refreshInterval = await AsyncStorage.getItem('interval');
+        if (refreshInterval !== null) {
+          setRefreshInterval(refreshInterval);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const dateStr = moment(date).format('YYYY-MM-DD');
@@ -141,7 +156,6 @@ const styles = StyleSheet.create({
   },
   currencyPicker: {
     paddingVertical: 10,
-    width: '100%',
     justifyContent: 'center',
   },
   currencyItemWrapper: {

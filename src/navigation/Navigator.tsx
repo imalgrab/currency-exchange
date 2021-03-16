@@ -1,13 +1,23 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
-import { DateScreen } from '../screens/DateScreen';
+import { PastDateScreen } from '../screens/PastDateScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { Ionicons } from '@expo/vector-icons/';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { createStackNavigator } from '@react-navigation/stack';
+import { HomeStackParamList, TabParamList } from '../utils/types';
 
-const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator<HomeStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
+
+export const HomeStackScreen = () => (
+  <Stack.Navigator>
+    <Stack.Screen name="Home" component={HomeScreen} />
+    <Stack.Screen name="PastDate" component={PastDateScreen} />
+  </Stack.Navigator>
+);
 
 export const Navigator = () => {
   return (
@@ -20,10 +30,8 @@ export const Navigator = () => {
               let iconName;
               if (route.name === 'Home') {
                 iconName = focused ? 'ios-home' : 'ios-home-outline';
-              } else if (route.name === 'Settings') {
-                iconName = focused ? 'ios-settings' : 'ios-settings-outline';
               } else {
-                iconName = focused ? 'ios-calendar' : 'ios-calendar-outline';
+                iconName = focused ? 'ios-settings' : 'ios-settings-outline';
               }
               return <Ionicons name={iconName} size={size} color={color} />;
             },
@@ -32,8 +40,7 @@ export const Navigator = () => {
             activeTintColor: 'tomato',
             inactiveTintColor: 'gray',
           }}>
-          <Tab.Screen name="Home" component={HomeScreen} />
-          <Tab.Screen name="Date" component={DateScreen} />
+          <Tab.Screen name="Home" component={HomeStackScreen} />
           <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
       </NavigationContainer>

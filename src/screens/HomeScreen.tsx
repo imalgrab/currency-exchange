@@ -14,31 +14,38 @@ import moment from 'moment';
 import { currencies } from '../utils/mockData';
 import { Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { HomeScreenNavigationProp, HomeScreenRouteProp } from '../utils/types';
 
-interface Props {}
+interface Props {
+  navigation: HomeScreenNavigationProp;
+  route: HomeScreenRouteProp;
+}
 
-export const HomeScreen: FC<Props> = () => {
+export const HomeScreen: FC<Props> = ({ navigation, route }) => {
+  const pastDate = route.params?.date;
+
+  const [refreshInterval, setRefreshInterval] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState(0);
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState(pastDate || new Date());
   const [currency, setCurrency] = useState('PLN');
   const [rates, setRates] = useState(
     Object.fromEntries(currencies.filter(c => c !== currency).map(c => [c, 0])),
   );
 
   useEffect(() => {
-    const fetchFromStorage = async () => {
+    const fetchSettings = async () => {
       try {
         const refreshInterval = await AsyncStorage.getItem('interval');
         if (refreshInterval !== null) {
-          setRefreshInterval(refreshInterval);
+          setRefreshInterval(Number(refreshInterval));
         }
       } catch (error) {
         console.error(error);
       }
     };
-  }, []);
+    fetchSettings();
+  }, [navigation]);
 
   useEffect(() => {
     const dateStr = moment(date).format('YYYY-MM-DD');
@@ -59,6 +66,9 @@ export const HomeScreen: FC<Props> = () => {
     const currentDate = selectedDate || date;
     setShowDatePicker(Platform.OS === 'ios');
     setDate(currentDate);
+    navigation.push('Home', {
+      date: currentDate,
+    });
   };
 
   return (

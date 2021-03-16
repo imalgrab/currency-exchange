@@ -6,7 +6,7 @@ import { Button, DefaultTheme, TextInput } from 'react-native-paper';
 interface Props {}
 
 export const SettingsScreen: FC<Props> = ({ navigation }: any) => {
-  const [refreshInterval, setRefreshInterval] = useState<string>();
+  const [refreshInterval, setRefreshInterval] = useState<string>('10');
   const [error, setError] = useState<string>('');
 
   const handleSave = async () => {

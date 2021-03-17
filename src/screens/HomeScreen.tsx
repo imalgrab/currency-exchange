@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -6,15 +6,16 @@ import {
   View,
   TouchableOpacity,
   Platform,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import { currencies } from '../utils/mockData';
-import { Button } from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Button, Divider } from 'react-native-paper';
 import { HomeScreenNavigationProp, HomeScreenRouteProp } from '../utils/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import { theme } from '../utils/theme';
 
 interface Props {
   navigation: HomeScreenNavigationProp;
@@ -22,64 +23,93 @@ interface Props {
 }
 
 export const HomeScreen: FC<Props> = ({ navigation, route }) => {
-  const pastDate = route.params?.date;
-
-  const [refreshInterval, setRefreshInterval] = useState(0);
+  const [refreshInterval, setRefreshInterval] = useState(10000);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [date, setDate] = useState(pastDate || new Date());
-  const [currency, setCurrency] = useState('PLN');
+  const [date, setDate] = useState(new Date());
+  const [currency, setCurrency] = useState('EUR');
   const [rates, setRates] = useState(
-    Object.fromEntries(currencies.filter(c => c !== currency).map(c => [c, 0])),
+    Object.fromEntries(
+      Object.keys(currencies)
+        .filter(c => c !== currency)
+        .map(c => [c, 0]),
+    ),
   );
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const refreshInterval = await AsyncStorage.getItem('interval');
-        if (refreshInterval !== null) {
-          setRefreshInterval(Number(refreshInterval));
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchSettings = async () => {
+        try {
+          const interval = await AsyncStorage.getItem('interval');
+          if (isActive && interval !== null) {
+            setRefreshInterval(+interval);
+          }
+        } catch (error) {
+          console.error(error);
         }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchSettings();
-  }, [navigation]);
+      };
+
+      console.log('Request');
+      fetchSettings();
+
+      return () => {
+        isActive = false;
+      };
+    }, []),
+  );
+
+  const getRates = async () => {
+    setIsLoading(true);
+    const dateStr = moment(date).format('YYYY-MM-DD');
+    const res = await fetch(
+      `https://api.exchangeratesapi.io/${dateStr}?base=${currency}`,
+    );
+    const json = await res.json();
+    const rates = await json.rates;
+    setRates(rates);
+    setIsLoading(false);
+  };
 
   useEffect(() => {
-    const dateStr = moment(date).format('YYYY-MM-DD');
-    const getRates = async () => {
-      setIsLoading(true);
-      const res = await fetch(
-        `https://api.exchangeratesapi.io/${dateStr}?base=${currency}`,
-      );
-      const json = await res.json();
-      const rates = await json.rates;
-      setRates(rates);
-      setIsLoading(false);
-    };
-    getRates();
-  }, [currency, date]);
+    //when datePicker is enabled don't refresh
+    if (!showDatePicker) {
+      const interval = setInterval(() => {
+        getRates();
+      }, refreshInterval || 10000);
+      return () => {
+        clearInterval(interval);
+      };
+    }
+  }, [showDatePicker]);
 
-  const onDatePickerChange = (event, selectedDate) => {
+  useEffect(() => {
+    getRates();
+  }, [date, currency]);
+
+  const onDatePickerChange = (e: Event, selectedDate) => {
     const currentDate = selectedDate || date;
     setShowDatePicker(Platform.OS === 'ios');
-    setDate(currentDate);
-    navigation.push('Home', {
-      date: currentDate,
-    });
+    if (Platform.OS === 'ios') {
+      setDate(currentDate);
+    } else if (Platform.OS === 'android' && e.type === 'set') {
+      navigation.push('PastDate', {
+        date: currentDate.toISOString(),
+        currency,
+      });
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.card}>
-        <Text>Current currency:</Text>
+        <Text style={styles.sectionLabel}>Current currency:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.currencyPicker}>
-          {currencies.map(curr => (
+          {Object.keys(currencies).map(curr => (
             <View key={curr} style={styles.currencyItemWrapper}>
               <TouchableOpacity onPress={() => setCurrency(curr)}>
                 <Text
@@ -97,10 +127,9 @@ export const HomeScreen: FC<Props> = ({ navigation, route }) => {
       </View>
 
       <View style={styles.card}>
-        <Text>Current date:</Text>
+        <Text style={styles.sectionLabel}>Current date:</Text>
         <Button
           mode="contained"
-          color="tomato"
           style={styles.dateButton}
           labelStyle={styles.dateButtonLabel}
           onPress={() => setShowDatePicker(!showDatePicker)}>
@@ -118,25 +147,44 @@ export const HomeScreen: FC<Props> = ({ navigation, route }) => {
               onChange={onDatePickerChange}
             />
           )}
+          {Platform.OS === 'ios' && showDatePicker && (
+            <Button
+              onPress={() => {
+                navigation.navigate('PastDate', {
+                  date: date.toISOString(),
+                  currency,
+                });
+                setDate(new Date());
+                setShowDatePicker(!showDatePicker);
+              }}
+              theme={theme}>
+              Apply
+            </Button>
+          )}
         </View>
       </View>
       <View style={styles.card}>
+        <Text style={styles.title}>
+          {currencies[currency]} 1 {currency}
+        </Text>
+        <Divider style={{ margin: 10 }} />
         <ScrollView>
-          {currencies
+          {Object.keys(currencies)
             .filter(c => c !== currency)
-            .map(curr => (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-around',
-                }}>
-                <Text>1 {currency}</Text>
-                <Text>
-                  {isLoading
-                    ? '...'
-                    : (Math.round(rates[curr] * 100) / 100).toFixed(2)}
-                  {` ${curr}`}
-                </Text>
+            .map((curr, i) => (
+              <View key={`${i}`}>
+                {isLoading ? (
+                  <View style={styles.textContainer}>
+                    <View style={styles.loading} />
+                  </View>
+                ) : (
+                  <View style={styles.textContainer}>
+                    <Text style={styles.flag}>{currencies[curr]}</Text>
+                    <Text style={styles.caption}>
+                      {Number(rates[curr]).toFixed(2)} {curr}
+                    </Text>
+                  </View>
+                )}
               </View>
             ))}
         </ScrollView>
@@ -147,21 +195,27 @@ export const HomeScreen: FC<Props> = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   container: {
-    margin: 10,
+    marginHorizontal: 10,
   },
   card: {
     backgroundColor: 'white',
-    marginVertical: 5,
+    marginBottom: 10,
     borderRadius: 15,
-    padding: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
   },
   datePicker: {
     paddingVertical: 10,
   },
   dateButton: {
-    marginTop: 20,
+    backgroundColor: '#3498db',
+    marginTop: 15,
+    marginHorizontal: 10,
+    borderRadius: 15,
   },
   dateButtonLabel: {
+    fontFamily: 'Regular',
+    fontSize: 14,
     color: 'white',
   },
   currencyPicker: {
@@ -173,10 +227,44 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   currencyItemSelected: {
-    color: 'tomato',
-    fontWeight: 'bold',
+    fontFamily: 'Medium',
+    fontSize: 16,
+    color: '#3498db',
   },
   currencyItem: {
+    fontFamily: 'Regular',
+    fontSize: 16,
     color: 'black',
+  },
+  sectionLabel: {
+    fontFamily: 'Medium',
+    fontSize: 16,
+  },
+  loading: {
+    backgroundColor: 'ghostwhite',
+    width: '40%',
+    height: 16,
+    margin: 2,
+    borderRadius: 15,
+  },
+  flag: {
+    paddingRight: 5,
+    fontSize: 18,
+  },
+  caption: {
+    fontFamily: 'Regular',
+    fontSize: 14,
+  },
+  title: {
+    fontFamily: 'Regular',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  textContainer: {
+    marginVertical: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: 5,
   },
 });

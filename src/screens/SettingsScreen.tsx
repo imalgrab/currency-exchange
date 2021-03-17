@@ -1,30 +1,42 @@
 import React, { FC, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Button, DefaultTheme, TextInput } from 'react-native-paper';
+import { Button, TextInput } from 'react-native-paper';
+import {
+  SettingsScreenNavigationProp,
+  SettingsScreenRouteProp,
+} from '../utils/types';
+import { theme } from '../utils/theme';
 
-interface Props {}
+interface Props {
+  navigation: SettingsScreenNavigationProp;
+  route: SettingsScreenRouteProp;
+}
 
-export const SettingsScreen: FC<Props> = ({ navigation }: any) => {
+export const SettingsScreen: FC<Props> = ({ navigation }) => {
   const [refreshInterval, setRefreshInterval] = useState<string>('10');
   const [error, setError] = useState<string>('');
 
   const handleSave = async () => {
     try {
       if (refreshInterval) {
-        await AsyncStorage.setItem('interval', refreshInterval);
+        await AsyncStorage.setItem('interval', refreshInterval + '000');
       }
+      alert('The settings have been changed successfully!');
     } catch (error) {
       console.error(error);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      scrollEnabled={false}
+      keyboardShouldPersistTaps="never"
+      contentContainerStyle={styles.container}>
       <TextInput
+        theme={theme}
         value={refreshInterval}
         onChangeText={text => {
-          console.log(text);
           setRefreshInterval(text);
           if (Number.isNaN(Number(text))) {
             setError('Please put an actual number');
@@ -32,16 +44,15 @@ export const SettingsScreen: FC<Props> = ({ navigation }: any) => {
             setError('');
           }
         }}
-        theme={theme}
-        keyboardType="number-pad"
+        keyboardType="decimal-pad"
         label="Refresh interval (s)"
         style={styles.input}
       />
       <Text style={{ color: 'red' }}>{error}</Text>
       <View style={styles.buttons}>
         <Button
-          disabled={error !== ''}
           theme={theme}
+          disabled={error !== ''}
           onPress={handleSave}
           labelStyle={styles.buttonLabel}>
           SAVE
@@ -53,7 +64,7 @@ export const SettingsScreen: FC<Props> = ({ navigation }: any) => {
           BACK
         </Button>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -71,12 +82,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonLabel: {
-    color: 'tomato',
+    fontFamily: 'Medium',
+    fontSize: 14,
+    color: '#3498db',
   },
   input: {},
 });
-
-const theme = {
-  ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, primary: 'tomato' },
-};

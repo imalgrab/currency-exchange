@@ -4,8 +4,8 @@ import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 export type HomeStackParamList = {
-  Home: { date: Date } | undefined;
-  PastDate: { date: Date };
+  Home: undefined;
+  PastDate: { date: string; currency: string };
 };
 
 export type TabParamList = {

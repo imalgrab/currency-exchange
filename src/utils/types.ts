@@ -5,11 +5,11 @@ import { StackNavigationProp } from '@react-navigation/stack';
 
 export type HomeStackParamList = {
   Home: undefined;
-  PastDate: { date: string; currency: string };
+  PastDate: { date: string; currency: Currency };
 };
 
 export type TabParamList = {
-  Home: HomeStackParamList;
+  Home: undefined;
   Settings: undefined;
 };
 
@@ -30,3 +30,19 @@ export type SettingsScreenNavigationProp = StackNavigationProp<
   'Settings'
 >;
 export type SettingsScreenRouteProp = RouteProp<TabParamList, 'Settings'>;
+
+// OTHER
+
+export type Currency =
+  | 'PLN'
+  | 'EUR'
+  | 'USD'
+  | 'CHF'
+  | 'GBP'
+  | 'CAD'
+  | 'NOK'
+  | 'JPY'
+  | 'AUD'
+  | 'SEK'
+  | 'CZK'
+  | 'HUF';

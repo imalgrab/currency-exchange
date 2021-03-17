@@ -13,6 +13,7 @@ import moment from 'moment';
 import { currencies } from '../utils/mockData';
 import { Button, Divider } from 'react-native-paper';
 import {
+  Currency,
   PastDateScreenNavigationProp,
   PastDateScreenRouteProp,
 } from '../utils/types';
@@ -20,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { Header } from '@react-navigation/stack';
 import { theme } from '../utils/theme';
+import { isCurrency } from '../utils/utils';
 
 interface Props {
   navigation: PastDateScreenNavigationProp;
@@ -27,46 +29,20 @@ interface Props {
 }
 
 export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
-  const pastDateString = route.params?.date;
+  const pastDateString = route.params.date;
   const prevCurrency = route.params.currency;
 
   const [refreshInterval, setRefreshInterval] = useState(10000);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [date, setDate] = useState(
-    (pastDateString && new Date(pastDateString)) || new Date(),
-  );
-  const [currency, setCurrency] = useState(prevCurrency || 'EUR');
+  const [date, setDate] = useState(new Date(pastDateString) || new Date());
+  const [currency, setCurrency] = useState<Currency>(prevCurrency || 'EUR');
   const [rates, setRates] = useState(
     Object.fromEntries(
       Object.keys(currencies)
         .filter(c => c !== currency)
         .map(c => [c, 0]),
     ),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      let isActive = true;
-
-      const fetchSettings = async () => {
-        try {
-          const interval = await AsyncStorage.getItem('interval');
-          if (isActive && interval !== null) {
-            setRefreshInterval(+interval);
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      };
-
-      console.log('Request');
-      fetchSettings();
-
-      return () => {
-        isActive = false;
-      };
-    }, []),
   );
 
   const getRates = async () => {
@@ -81,8 +57,30 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
     setIsLoading(false);
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      const fetchSettings = async () => {
+        try {
+          const interval = await AsyncStorage.getItem('interval');
+          if (isActive && interval !== null) {
+            setRefreshInterval(+interval);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      console.log('INTERVAL FETCH FROM HOME REQUEST');
+      fetchSettings();
+      return () => {
+        isActive = false;
+      };
+    }, []),
+  );
+
   useEffect(() => {
-    //when datePicker is enabled don't refresh
+    // when datePicker is enabled don't refresh
+    // interval getsCleared whenever picker shows up or interval/currency changes
     if (!showDatePicker) {
       const interval = setInterval(() => {
         getRates();
@@ -91,24 +89,12 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
         clearInterval(interval);
       };
     }
-  }, [showDatePicker]);
+  }, [showDatePicker, refreshInterval, currency]);
 
   useEffect(() => {
+    // whenever active currency changes, fetch rates
     getRates();
-  }, [date, currency]);
-
-  const onDatePickerChange = (e: Event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setShowDatePicker(Platform.OS === 'ios');
-    if (Platform.OS === 'ios') {
-      setDate(currentDate);
-    } else if (Platform.OS === 'android' && e.type === 'set') {
-      navigation.push('PastDate', {
-        date: currentDate.toISOString(),
-        currency,
-      });
-    }
-  };
+  }, [currency]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,7 +106,12 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
           contentContainerStyle={styles.currencyPicker}>
           {Object.keys(currencies).map(curr => (
             <View key={curr} style={styles.currencyItemWrapper}>
-              <TouchableOpacity onPress={() => setCurrency(curr)}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (isCurrency(curr)) {
+                    setCurrency(curr);
+                  }
+                }}>
                 <Text
                   style={
                     currency === curr
@@ -153,7 +144,18 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
               mode="date"
               is24Hour={true}
               display="spinner"
-              onChange={onDatePickerChange}
+              onChange={(e, selectedDate) => {
+                const currentDate = selectedDate || date;
+                setShowDatePicker(Platform.OS === 'ios');
+                if (Platform.OS === 'ios') {
+                  setDate(currentDate);
+                } else if (Platform.OS === 'android' && e.type === 'set') {
+                  navigation.push('PastDate', {
+                    date: currentDate.toISOString(),
+                    currency,
+                  });
+                }
+              }}
             />
           )}
           {Platform.OS === 'ios' && showDatePicker && (
@@ -188,7 +190,9 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
                   </View>
                 ) : (
                   <View style={styles.textContainer}>
-                    <Text style={styles.flag}>{currencies[curr]}</Text>
+                    {isCurrency(curr) && (
+                      <Text style={styles.flag}>{currencies[curr]}</Text>
+                    )}
                     <Text style={styles.caption}>
                       {Number(rates[curr]).toFixed(2)} {curr}
                     </Text>

@@ -66,7 +66,6 @@ export const HomeScreen: FC<Props> = ({ navigation }) => {
           console.error(error);
         }
       };
-      console.log('INTERVAL FETCH FROM HOME REQUEST');
       fetchSettings();
       return () => {
         isActive = false;

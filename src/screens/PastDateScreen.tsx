@@ -57,39 +57,38 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
     setIsLoading(false);
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      let isActive = true;
-      const fetchSettings = async () => {
-        try {
-          const interval = await AsyncStorage.getItem('interval');
-          if (isActive && interval !== null) {
-            setRefreshInterval(+interval);
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      };
-      console.log('INTERVAL FETCH FROM HOME REQUEST');
-      fetchSettings();
-      return () => {
-        isActive = false;
-      };
-    }, []),
-  );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     let isActive = true;
+  //     const fetchSettings = async () => {
+  //       try {
+  //         const interval = await AsyncStorage.getItem('interval');
+  //         if (isActive && interval !== null) {
+  //           setRefreshInterval(+interval);
+  //         }
+  //       } catch (error) {
+  //         console.error(error);
+  //       }
+  //     };
+  //     fetchSettings();
+  //     return () => {
+  //       isActive = false;
+  //     };
+  //   }, []),
+  // );
 
-  useEffect(() => {
-    // when datePicker is enabled don't refresh
-    // interval getsCleared whenever picker shows up or interval/currency changes
-    if (!showDatePicker) {
-      const interval = setInterval(() => {
-        getRates();
-      }, refreshInterval || 10000);
-      return () => {
-        clearInterval(interval);
-      };
-    }
-  }, [showDatePicker, refreshInterval, currency]);
+  // useEffect(() => {
+  //   // when datePicker is enabled don't refresh
+  //   // interval getsCleared whenever picker shows up or interval/currency changes
+  //   if (!showDatePicker) {
+  //     const interval = setInterval(() => {
+  //       getRates();
+  //     }, refreshInterval || 10000);
+  //     return () => {
+  //       clearInterval(interval);
+  //     };
+  //   }
+  // }, [showDatePicker, refreshInterval, currency]);
 
   useEffect(() => {
     // whenever active currency changes, fetch rates

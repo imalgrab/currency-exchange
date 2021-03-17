@@ -94,7 +94,6 @@ export const HomeScreen: FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text>{refreshInterval}</Text>
       <View style={styles.card}>
         <Text style={styles.sectionLabel}>Current currency:</Text>
         <ScrollView

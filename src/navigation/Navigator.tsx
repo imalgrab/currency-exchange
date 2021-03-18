@@ -13,6 +13,8 @@ import moment from 'moment';
 const Stack = createStackNavigator<HomeStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
+
+
 export const HomeStackScreen = () => (
   <Stack.Navigator>
     <Stack.Screen
@@ -20,21 +22,25 @@ export const HomeStackScreen = () => (
       component={HomeScreen}
       options={{
         headerTitle: 'Currency Exchange',
-        headerTitleAlign: 'center',
-        headerTitleStyle: { fontFamily: 'Bold' },
+        headerTitleAlign: 'center', // mozna to wynieść do Stack.Navigator, bo są takie same dla każdego widoku
+        headerTitleStyle: { fontFamily: 'Bold' }, // mozna to wynieść do Stack.Navigator, bo są takie same dla każdego widoku
       }}
     />
     <Stack.Screen
       name="PastDate"
       options={({ route }) => ({
-        headerTitle: moment(route.params.date).format('DD.MM.YYYY'),
-        headerTitleAlign: 'center',
-        headerTitleStyle: { fontFamily: 'Bold' },
+        headerTitle: moment(route.params.date).format('DD.MM.YYYY'), // moment jest tutaj overkillem :), da się to w czystm JS zrobic new Date(date).to...
+        headerTitleAlign: 'center', // mozna to wynieść do Stack.Navigator, bo są takie same dla każdego widoku
+        headerTitleStyle: { fontFamily: 'Bold' }, // mozna to wynieść do Stack.Navigator, bo są takie same dla każdego widoku
       })}
       component={PastDateScreen}
     />
   </Stack.Navigator>
 );
+
+/*
+  nie lubie miec tak rozbudowanych parametrow w htmlu, jak moge to dla czytelnosci wyciagam to wyzej przed render
+*/
 
 export const Navigator = () => {
   return (
@@ -50,7 +56,7 @@ export const Navigator = () => {
               } else {
                 iconName = focused ? 'ios-settings' : 'ios-settings-outline';
               }
-              return <Ionicons name={iconName} size={size} color={color} />;
+              return <Ionicons name={iconName} size={size} color={color} />; // ts error, name musi być stringiem, więc można dodać default value do iconName (let iconName = 'x')
             },
           })}
           tabBarOptions={{

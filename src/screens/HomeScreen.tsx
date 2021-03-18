@@ -99,10 +99,10 @@ export const HomeScreen: FC<Props> = ({ navigation }) => {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.currencyPicker}>
-          {Object.keys(currencies).map(curr => (
+          {Object.keys(currencies).map(curr => ( // curr to słaba nazwa, nie wiadomo o co chodzi, już lepiej "item"
             <View key={curr} style={styles.currencyItemWrapper}>
               <TouchableOpacity
-                onPress={() => {
+                onPress={() => { // onPress={() => isCurrency(curr) && setCurrency(curr) można krócej zapisać
                   if (isCurrency(curr)) {
                     setCurrency(curr);
                   }
@@ -134,7 +134,7 @@ export const HomeScreen: FC<Props> = ({ navigation }) => {
           {showDatePicker && (
             <DateTimePicker
               maximumDate={new Date()}
-              minimumDate={new Date(1999, 0, 4)}
+              minimumDate={new Date(1999, 0, 4)} // mam nadzieje, że to wyciągnąłeś z dokumentacji :)
               value={date}
               mode="date"
               is24Hour={true}
@@ -176,9 +176,9 @@ export const HomeScreen: FC<Props> = ({ navigation }) => {
         <Divider style={{ margin: 10 }} />
         <ScrollView>
           {Object.keys(currencies)
-            .filter(c => c !== currency)
+            .filter(c => c !== currency) // dużo logiki, można to wyjąć do osobnego komponentu
             .map((curr, i) => (
-              <View key={`${i}`}>
+              <View key={`${i}`}> //curr byloby lepszym keyem
                 {isLoading ? (
                   <View style={styles.textContainer}>
                     <View style={styles.loading} />

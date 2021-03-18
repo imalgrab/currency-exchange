@@ -17,9 +17,9 @@ import {
   PastDateScreenNavigationProp,
   PastDateScreenRouteProp,
 } from '../utils/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
-import { Header } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // nieużywane importy (ustaw sobie IDE lepiej :))
+import { useFocusEffect } from '@react-navigation/native'; // nieużywane importy (ustaw sobie IDE lepiej :))
+import { Header } from '@react-navigation/stack'; // nieużywane importy (ustaw sobie IDE lepiej :))
 import { theme } from '../utils/theme';
 import { isCurrency } from '../utils/utils';
 

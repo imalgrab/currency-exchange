@@ -17,11 +17,9 @@ import {
   PastDateScreenNavigationProp,
   PastDateScreenRouteProp,
 } from '../utils/types';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // nieużywane importy (ustaw sobie IDE lepiej :))
-import { useFocusEffect } from '@react-navigation/native'; // nieużywane importy (ustaw sobie IDE lepiej :))
-import { Header } from '@react-navigation/stack'; // nieużywane importy (ustaw sobie IDE lepiej :))
 import { theme } from '../utils/theme';
 import { isCurrency } from '../utils/utils';
+import { DatePicker } from '../components/DatePicker';
 
 interface Props {
   navigation: PastDateScreenNavigationProp;
@@ -32,7 +30,6 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
   const pastDateString = route.params.date;
   const prevCurrency = route.params.currency;
 
-  const [refreshInterval, setRefreshInterval] = useState(10000);
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [date, setDate] = useState(new Date(pastDateString) || new Date());
@@ -45,7 +42,29 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
     ),
   );
 
-  const getRates = async () => {
+  const onDateChange = (e, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setShowDatePicker(Platform.OS === 'ios');
+    if (Platform.OS === 'ios') {
+      setDate(currentDate);
+    } else if (Platform.OS === 'android' && e.type === 'set') {
+      navigation.push('PastDate', {
+        date: currentDate.toISOString(),
+        currency,
+      });
+    }
+  };
+
+  const onButtonPress = () => {
+    navigation.navigate('PastDate', {
+      date: date.toISOString(),
+      currency,
+    });
+    setDate(new Date());
+    setShowDatePicker(!showDatePicker);
+  };
+
+  const fetchRates = async () => {
     setIsLoading(true);
     const dateStr = moment(date).format('YYYY-MM-DD');
     const res = await fetch(
@@ -57,42 +76,8 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
     setIsLoading(false);
   };
 
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     let isActive = true;
-  //     const fetchSettings = async () => {
-  //       try {
-  //         const interval = await AsyncStorage.getItem('interval');
-  //         if (isActive && interval !== null) {
-  //           setRefreshInterval(+interval);
-  //         }
-  //       } catch (error) {
-  //         console.error(error);
-  //       }
-  //     };
-  //     fetchSettings();
-  //     return () => {
-  //       isActive = false;
-  //     };
-  //   }, []),
-  // );
-
-  // useEffect(() => {
-  //   // when datePicker is enabled don't refresh
-  //   // interval getsCleared whenever picker shows up or interval/currency changes
-  //   if (!showDatePicker) {
-  //     const interval = setInterval(() => {
-  //       getRates();
-  //     }, refreshInterval || 10000);
-  //     return () => {
-  //       clearInterval(interval);
-  //     };
-  //   }
-  // }, [showDatePicker, refreshInterval, currency]);
-
   useEffect(() => {
-    // whenever active currency changes, fetch rates
-    getRates();
+    fetchRates();
   }, [currency]);
 
   return (
@@ -134,44 +119,12 @@ export const PastDateScreen: FC<Props> = ({ navigation, route }) => {
           onPress={() => setShowDatePicker(!showDatePicker)}>
           {moment(date).format('DD.MM.YYYY')}
         </Button>
-        <View style={styles.datePicker}>
-          {showDatePicker && (
-            <DateTimePicker
-              maximumDate={new Date()}
-              minimumDate={new Date(1999, 0, 4)}
-              value={date}
-              mode="date"
-              is24Hour={true}
-              display="spinner"
-              onChange={(e, selectedDate) => {
-                const currentDate = selectedDate || date;
-                setShowDatePicker(Platform.OS === 'ios');
-                if (Platform.OS === 'ios') {
-                  setDate(currentDate);
-                } else if (Platform.OS === 'android' && e.type === 'set') {
-                  navigation.push('PastDate', {
-                    date: currentDate.toISOString(),
-                    currency,
-                  });
-                }
-              }}
-            />
-          )}
-          {Platform.OS === 'ios' && showDatePicker && (
-            <Button
-              onPress={() => {
-                navigation.push('PastDate', {
-                  date: date.toISOString(),
-                  currency,
-                });
-                setDate(new Date(pastDateString));
-                setShowDatePicker(!showDatePicker);
-              }}
-              theme={theme}>
-              Apply
-            </Button>
-          )}
-        </View>
+        <DatePicker
+          visible={showDatePicker}
+          date={date}
+          onChange={onDateChange}
+          onPress={onButtonPress}
+        />
       </View>
       <View style={styles.card}>
         <Text style={styles.title}>

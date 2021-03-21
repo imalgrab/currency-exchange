@@ -5,7 +5,7 @@ import {
 } from 'react-native-paper';
 import { Navigator } from './navigation/Navigator';
 import { useFonts } from 'expo-font';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function App() {
   const [loaded] = useFonts({
@@ -17,9 +17,11 @@ export default function App() {
 
   if (!loaded) {
     return (
-      <SafeAreaView>
-        <ActivityIndicator size="large" color="tomato" />
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView>
+          <ActivityIndicator size="large" color="tomato" />
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 

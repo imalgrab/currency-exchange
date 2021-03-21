@@ -20,7 +20,7 @@ export const SettingsScreen: FC<Props> = ({ navigation }) => {
   const handleSave = async () => {
     try {
       if (refreshInterval) {
-        await AsyncStorage.setItem('interval', refreshInterval + '000');
+        await AsyncStorage.setItem('interval', refreshInterval + '000'); // w storage staramy sie trzymac jak najmniejsza wartosc, więc samo trzymanie sekund byłoby ok, mnożyć to można później
       }
       alert('The settings have been changed successfully!');
     } catch (error) {
@@ -37,6 +37,7 @@ export const SettingsScreen: FC<Props> = ({ navigation }) => {
         theme={theme}
         value={refreshInterval}
         onChangeText={text => {
+          /* tutaj cos jest przekombinowane, najpierw walidujemy, później zapisujemy jeżeli nie ma errorów. Chociaż ogólnie od tego są walidatory, mogłeś użyć React Form Hook */
           setRefreshInterval(text);
           if (Number.isNaN(Number(text))) {
             setError('Please put an actual number');
@@ -52,7 +53,7 @@ export const SettingsScreen: FC<Props> = ({ navigation }) => {
       <View style={styles.buttons}>
         <Button
           theme={theme}
-          disabled={error !== ''}
+          disabled={error !== ''} // samo "!error" byloby ok, pusty string to false
           onPress={handleSave}
           labelStyle={styles.buttonLabel}>
           SAVE
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
     padding: 10,
     flex: 1,
     justifyContent: 'center',
-    // alignItems: 'center',
+    // alignItems: 'center', // zakomentowany kod
   },
   buttons: {
     paddingTop: 20,
